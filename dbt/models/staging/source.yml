@@ -1,0 +1,53 @@
+version: 2
+
+sources:
+    - name: staging
+      database: crypto-analytics-2404
+      schema: coins_data
+      
+      tables:
+        - name: coins_table
+         # freshness:
+           # warn_after: {count: 6, period: hour}
+           # error_after: {count: 12, period: hour}
+
+models:
+    - name: stg_coinsdata
+      description: >
+        Real-time and historical data for various cryptocurrencies, including information such as current price, market cap, 
+        trading volume, percentage change, and other relevant metrics. 
+      columns:
+          - name: id
+            description: >
+                  Primary key for this table, generated with a concatenation of id+created_datetime.
+                  unique identifier for asset.
+            tests:
+                - unique:
+                    severity: warn
+                - not_null:
+                    severity: warn
+          - name: rank 
+            description: >
+                  rank is in ascending order - 
+                  this number is directly associated with the marketcap whereas the highest marketcap receives rank 1.
+          - name: symbol 
+            description: most common symbol used to identify this asset on an exchange.
+          - name: name 
+            description: proper name for asset.
+          - name: supply 
+            description: available supply for trading.
+          - name: maxSupply
+            description: total quantity of asset issued.
+          - name: marketCapUsd 
+            description: supply x price.
+          - name: volumeUsd24Hr 
+            description: >
+                quantity of trading volume represented in USD over the last 24 hours.
+          - name: priceUsd 
+            description: > 
+              volume-weighted price based on real-time market data, translated to USD.
+          - name: changePercent24Hr 
+            description: the direction and value change in the last 24 hours.
+          - name: vwap24Hr 
+            description: Volume Weighted Average Price in the last 24 hours.
+          
