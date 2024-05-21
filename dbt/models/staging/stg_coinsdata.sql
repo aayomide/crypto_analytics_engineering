@@ -10,11 +10,12 @@ with coins_raw as (
 coins_renamed as (
     select
         -- identifiers
-        {{ dbt_utils.surrogate_key(['id']) }} as id,
+        {{ dbt_utils.surrogate_key(['id', 'symbol']) }} as id,
 
         -- coin info
         name,
         symbol,
+        id as coin_id,
         cast(rank as integer) as rank,
         
         -- timestamp
@@ -29,7 +30,7 @@ coins_renamed as (
         cast(vwap24Hr as numeric) as vwap_24Hr,
         round(cast(supply as numeric)) as supply,
         round(cast(maxSupply as numeric)) as max_supply,
-        cast(marketCapUsd as numeric) as marketCapUsd,
+        cast(marketCapUsd as numeric) as market_cap_usd,
 
         -- external link to get more coin info
         explorer

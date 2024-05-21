@@ -39,5 +39,9 @@ models:
   dbt_coins:
     # Applies to all files under models/staging/
     staging:
+      +materialized: view
+      +schema: prod_coins_dataset
+    # Applies to all files under models/core/
+    core:
       +materialized: table
       +schema: prod_coins_dataset
