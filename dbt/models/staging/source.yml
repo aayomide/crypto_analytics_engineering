@@ -3,10 +3,10 @@ version: 2
 sources:
     - name: staging
       database: crypto-analytics-2404
-      schema: coins_data
+      schema: stg_coins_dataset
       
       tables:
-        - name: coins_table
+        - name: coins_data_raw
          # freshness:
            # warn_after: {count: 6, period: hour}
            # error_after: {count: 12, period: hour}
