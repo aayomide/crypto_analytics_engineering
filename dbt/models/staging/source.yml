@@ -19,8 +19,11 @@ models:
       columns:
           - name: id
             description: >
-                  Primary key for this table, generated with a concatenation of id+created_datetime.
-                  unique identifier for asset.
+                  Primary key for this table, generated using of id which is the coin id.
+                  unique identifier for each record.
+          - name: coin_id
+            description:
+                  unique identifier for coin asset.
             tests:
                 - unique:
                     severity: warn
@@ -50,4 +53,6 @@ models:
             description: the direction and value change in the last 24 hours.
           - name: vwap24Hr 
             description: Volume Weighted Average Price in the last 24 hours.
+          - name: explorer
+            description: url link to more info on the asset.
           
