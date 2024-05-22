@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: dim_coins
+    description: >
+      List of all unique tokens identified by coins id. 
+      Includes info on each coin maximum supply and other basic coin info.
+  - name: facts_coins
+    description: >
+      The table contains records of coins, their current price, trading volume, market capitalization 
+      and more identified by coin id

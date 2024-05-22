@@ -10,7 +10,7 @@ with coins_raw as (
 coins_renamed as (
     select
         -- identifiers
-        {{ dbt_utils.surrogate_key(['id', 'symbol']) }} as id,
+        {{ dbt_utils.generate_surrogate_key(['id', 'symbol']) }} as id,
 
         -- coin info
         name,
