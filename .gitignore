@@ -9,6 +9,4 @@ terraform/.keys
 
 # airflow
 airflow/logs/*
-airflow/logs/ingest_data_to_gcs_dag/*
-airflow/logs/dag_processor_manager/*
-airflow/logs/scheduler/2*
+airflow/dags/__pycache__/*
