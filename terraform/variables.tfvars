@@ -1,0 +1,6 @@
+project_id = "crypto-analytics-2404"
+region = "europe-west6"
+location = "EU"
+credentials = "C:/Users/pc/Documents/projects/coins_project/terraform/.keys/gcp_sa_key.json"
+staging_dataset_name = "stg_coins_dataset"
+production_dataset_name = "prod_coins_dataset"

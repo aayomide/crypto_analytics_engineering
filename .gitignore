@@ -1,0 +1,14 @@
+# virtual environment
+.coins_env/
+
+# terraform
+terraform/terraform.tfstate
+terraform/.terraform.lock.hcl
+terraform/.terraform
+terraform/.keys
+
+# airflow
+airflow/logs/*
+airflow/logs/ingest_data_to_gcs_dag/*
+airflow/logs/dag_processor_manager/*
+airflow/logs/scheduler/2*
