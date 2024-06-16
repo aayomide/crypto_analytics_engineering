@@ -44,7 +44,7 @@ Project Map:
   </p>
 </div>
 
-> *Disclaimer: This is a personal project, so please do not make actual financial decisions based on this dashboard. T for thanks!*
+> *Disclaimer: This project is for illustrative purposes only. Please do not use this dashboard for actual financial decisions. T for thanks!*
 
 ---
 
@@ -68,8 +68,8 @@ ex: `ssh-keygen -t rsa -f ~/.ssh/ssh_key -C aayomide -b 2048`
 ### 3. Provision the Needed GCP Resources via Terraform. 
 Follow the [terraform reproduce guide](/setup/terraform_setup.md)
 
-### 4. Create an SSH connection to the newly created VM (on your local machine)
-Create a file called config within the .ssh directory in your home folder and paste the following information:
+### 4. Create an SSH Connection to the newly created VM (on your local machine)
+Create a file called `config` within the .ssh directory in your home folder and paste the following information:
 
     ```
     HOST <vm-name-to-use-when-connecting>
@@ -78,7 +78,7 @@ Create a file called config within the .ssh directory in your home folder and pa
         IdentityFile <absolute-path-to-your-private-ssh-key-on-local-machine>
         LocalForward 8080 localhost:8080     # forward traffic from local port 8080 to port 8080 on the remote server where Airflow is running
     ```
-    for example:
+  for example
   
     ```
     HOST cryptolytics_vm
@@ -97,11 +97,10 @@ You can also access to the VM via VS code as shown [here](https://github.com/Ali
 ### 5: Setup DBT (data build tool).
 Follow the [dbt how-to-reproduce guide](/setup/dbt_setup.md)
 
-### 6. Orchestrate the dataflow with Airflow. 
+### 6. Orchestrate the Dataflow with Airflow. 
 Follow the  [airflow how-to-reproduce guide](/setup/airflow_setup.md)
 
-### 7. Create a report in Looker Studio:
-You can use any data visualization tool of your choice to access the data in the newly created table. In this case, Looker Studio was used, and set up to access the "prod_coins_dataset" dataset in Big Query.
+### 7. Create a Report in Looker Studio:
 - Log in to [Looker Studio](https://lookerstudio.google.com/navigation/reporting) using your google account
 - Click on "Blank report" and select the "BigQuery" data connector
 - Choose your data source (project -> dataset), which in this case is "prod_coins_dataset"
