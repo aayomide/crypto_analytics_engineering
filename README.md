@@ -51,7 +51,7 @@ Project Map:
 ## How to Replicate the Data Pipeline 
 Below are steps on how to reproduce this pipeline in the cloud. Note, that, Windows/WSL/Gitbash was used locally for this project.
 
-#### 1. Set up Google Cloud Platform (GCP)
+### 1. Set up Google Cloud Platform (GCP)
   - If you don't have a GCP account already, create a free trial account (you get free $300 credits) by following the steps [in this guide](https://www.googleadservices.com/pagead/aclk?sa=L&ai=DChcSEwjJ46z7nYv-AhURpLIKHROYA1EYABAAGgJscg&ohost=www.google.com&cid=CAASJeRojfEdEgjhUdavw-D6EgMxjah19w2TX2qQ3r70Et_NIAuN_L0&sig=AOD64_3k4xtbQ41NOlfBdXDrxSAO3RdG-A&q&adurl&ved=2ahUKEwiG6aT7nYv-AhX9QvEDHZlUD0gQ0Qx6BAgKEAE)
   - Create a new project on GCP ([see guide](https://cloud.google.com/resource-manager/docs/creating-managing-projects)) and take note of your Project ID, as it will be needed at the later stages of the project
   - Next is to enable necessary APIs for the project, create and configure a service account, and generate an auth-key. While all of these can be done via the GCP Web UI ([see](https://github.com/MichaelShoemaker/shoemaker-de-zoomcamp-final-project/blob/main/GitLikeMe.md)), Terraform will be used to run the processes (somebody say DevOps, hehehe). So skip for now.
@@ -59,16 +59,16 @@ Below are steps on how to reproduce this pipeline in the cloud. Note, that, Wind
       * You might need to restart your system before gcloud can be used via CLI. Check if the installation is successful by running `gcloud -v` in your terminal to view the version of the gcloud installed
       * Run `gcloud auth login`  to authenticate the Google Cloud SDK with your Google account
 
-#### 2. Generate the SSH Key Pair Locally
+### 2. Generate the SSH Key Pair Locally
 The SSH Key will be used to connect and gain access to the gcp virtual machine via the local terminal (Linux). In your terminal run the command <br>
 `ssh-keygen -t rsa -f ~/.ssh/<whatever-you-want-to-name-your-key> -C <the-username-that-you-want-on-your-VM> -b 2048`
 
 ex: `ssh-keygen -t rsa -f ~/.ssh/ssh_key -C aayomide -b 2048`
 
-#### 3. Provision the Needed GCP Resources via Terraform. 
+### 3. Provision the Needed GCP Resources via Terraform. 
 Follow the [terraform reproduce guide](/setup/terraform_setup.md)
 
-#### 4. Create an SSH connection to the newly created VM (on your local machine)
+### 4. Create an SSH connection to the newly created VM (on your local machine)
 Create a file called config within the .ssh directory in your home folder and paste the following information:
 
     ```
@@ -94,13 +94,13 @@ You can also access to the VM via VS code as shown [here](https://github.com/Ali
 
 > Note: the value of the external ip address changes as you turn the VM instance on and off
 
-#### 5: Setup DBT (data build tool).
+### 5: Setup DBT (data build tool).
 Follow the [dbt how-to-reproduce guide](/setup/dbt_setup.md)
 
-#### 6. Orchestrate the dataflow with Airflow. 
+### 6. Orchestrate the dataflow with Airflow. 
 Follow the  [airflow how-to-reproduce guide](/setup/airflow_setup.md)
 
-#### 7. Create a report in Looker Studio:
+### 7. Create a report in Looker Studio:
 You can use any data visualization tool of your choice to access the data in the newly created table. In this case, Looker Studio was used, and set up to access the "prod_coins_dataset" dataset in Big Query.
 - Log in to [Looker Studio](https://lookerstudio.google.com/navigation/reporting) using your google account
 - Click on "Blank report" and select the "BigQuery" data connector
