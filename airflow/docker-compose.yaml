@@ -65,6 +65,9 @@ x-airflow-common:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
+    #mount dbt directory
+    - ../dbt:/opt/airflow/dbt
+    # mount the directory for the google json credentials
     - ~/.google/credentials/:/.google/credentials:ro
 
   user: "${AIRFLOW_UID:-50000}:0"

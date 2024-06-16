@@ -2,19 +2,17 @@ import os
 import json
 import pandas as pd
 from datetime import datetime, timedelta
-import pendulum
 
 from airflow import DAG
-from airflow.utils.dates import days_ago
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 from google.cloud import storage
-from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateExternalTableOperator, BigQueryCreateEmptyTableOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateEmptyTableOperator
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 
 import pyarrow as pa
-import pyarrow.csv as pv
 import pyarrow.parquet as pq
 
 
@@ -33,8 +31,8 @@ parquet_filename = dataset_file.replace('.json', '.parquet')
 def format_to_parquet(src_file):
     """
     Convert the downloaded json dataset to parquet file format
-
-    :param src_file: JSON file name
+    :param src_file: JSON file
+    :return: parquet file
     """
     with open(src_file, 'r') as d:
         json_data = json.load(d)   # open the json file
@@ -65,21 +63,16 @@ def upload_to_gcs(bucket_name, local_json_file):
     client = storage.Client()
     bucket = client.bucket(bucket_name)
 
-    # upload json data
-    blob_name = f"raw/json/coins_{created_datetime}.json"
-    blob = bucket.blob(blob_name)
-    blob.upload_from_string(json.dumps(data), timeout=300)
-
-    # upload parquet data
-    blob_name = f"raw/parquet/coins_{created_datetime}.parquet"
-    blob = bucket.blob(blob_name)
+    # upload data
+    object_name = f"raw/parquet/coins_{created_datetime}.parquet"
+    blob = bucket.blob(object_name)
     blob.upload_from_filename(local_json_file.replace('.json', '.parquet'), timeout=300)
 
 
+# set default arguments
 afw_default_args = {
     "owner": "airflow",
     "start_date": datetime(2024, 5, 25),
-    # "start_date": pendulum.datetime(2024, 5, 25, tz='Africa/Lagos'), # See list of tz database time zones here -> https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     "depends_on_past": False,
     "retries": 1,
     'retry_delay': timedelta(minutes=5),
@@ -88,7 +81,7 @@ afw_default_args = {
 
 # DAG declaration - using a Context Manager (an implicit way)
 with DAG(
-    dag_id="ingest_data_to_gcs_dag",
+    dag_id="ingest_data_dag",
     schedule_interval=timedelta(minutes=5),  # run every 5 minutes
     default_args= afw_default_args,
     max_active_runs=1,
@@ -98,22 +91,22 @@ with DAG(
 
     # download the raw data
     download_data_task = BashOperator(
-        task_id="download_data_task",
+        task_id="download_data",
         bash_command = f'curl --location {dataset_url} > {path_to_local_home}/{dataset_file} && ls {path_to_local_home}'
     )
 
     # format the json file to parquet to make it easier to create the big query table schema
     format_to_parquet_task = PythonOperator(
-        task_id="format_to_parquet_task",
+        task_id="format_to_parquet",
         python_callable=format_to_parquet,
         op_kwargs={
             "src_file": f"{path_to_local_home}/{dataset_file}",
         },
     )
 
-    # send raw data to gcs
+    # upload the raw data to gcs
     local_to_gcs_task = PythonOperator(
-        task_id="local_to_gcs_task",
+        task_id="local_to_gcs",
         python_callable=upload_to_gcs,
         op_kwargs={
             "bucket_name": BUCKET_NAME,
@@ -121,17 +114,17 @@ with DAG(
         },
     )
 
-    # create empty table
-    create_bq_table_task = BigQueryCreateEmptyTableOperator(
-        task_id="create_bq_table_task",
-        dataset_id=BQ_DATASET_NAME,
-        table_id=BQ_TABLE_NAME,
-    ),
+    # # create a table in the big query dataset, if it doesnt already exist
+    # create_bq_table_task = BigQueryCreateEmptyTableOperator(
+    #     task_id="create_bq_table",
+    #     dataset_id=BQ_DATASET_NAME,
+    #     table_id=BQ_TABLE_NAME,
+    # )
 
 
     # load the parquet file stored in gcs into the bq table
-    load_data_to_bq_dataset_task = GCSToBigQueryOperator(
-        task_id='load_data_to_bq_dataset_task',
+    load_data_to_bq_task = GCSToBigQueryOperator(
+        task_id='load_data_to_bq',
         bucket=BUCKET_NAME,
         source_objects= [f"raw/parquet/{parquet_filename}"],
         source_format='PARQUET',
@@ -139,18 +132,25 @@ with DAG(
         autodetect=True,
         write_disposition='WRITE_TRUNCATE',
         create_disposition='CREATE_IF_NEEDED',
-        )
+    )
 
-    # remove downloaded json file and csv file from airflow local path
+    # trigger dbt data transformation task
+    trigger_dbt_dag_task = TriggerDagRunOperator(
+        task_id ='trigger_dbt_dag',
+        trigger_dag_id = 'transform_data_in_dbt_dag', # id of the dag to trigger in transform.py
+        # wait_for_completion = True
+    )
+
+    # remove the downloaded json file and csv file from airflow local path
     remove_local_files_task = BashOperator(
-        task_id="remove_local_files_task",
+        task_id="remove_local_files",
         bash_command = f'ls {path_to_local_home} && rm -f {path_to_local_home}/{dataset_file} {path_to_local_home}/{parquet_filename}\
              && ls {path_to_local_home}'
     )
 
 
-    
-    download_data_task >> format_to_parquet_task >> local_to_gcs_task >> create_bq_table_task >> load_data_to_bq_dataset_task >> remove_local_files_task
+    # task dependencies
+    download_data_task >> format_to_parquet_task >> local_to_gcs_task >> load_data_to_bq_task >> trigger_dbt_dag_task >> remove_local_files_task
     
     
 
