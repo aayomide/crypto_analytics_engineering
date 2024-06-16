@@ -1,51 +1,52 @@
-terraform {
-  required_version = ">= 1.0"
-  backend "local" {}              # Can change from "local" to "gcs" (for google) or "s3" (for aws), if you would like to preserve your tf-state online
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "5.10.0"
+# =========================================================================================================
+# Create Virtual machine (incl. SSH and GC CLI authentication, and initial installation of some libraries)
+# =========================================================================================================
+
+resource "google_compute_instance" "vm_instance" {
+  name         = var.instance_name
+  machine_type = var.machine_type
+  zone         = var.zone
+  project      = var.project_id
+
+  boot_disk {
+    initialize_params {
+      image = "projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240519"
+      size  = 30
+      type  = "pd-balanced"
     }
   }
-}
 
-provider "google" {
-  project = var.project_id
-  region  = var.region
-  credentials = file(var.credentials)   # Use this if you do not want to set env-var GOOGLE_APPLICATION_CREDENTIALS
-}
-
-// create GCS bucket
-resource "google_storage_bucket" "data-lake-bucket" {
-  name          = "${local.data_lake_bucket}_${var.project_id}"     # Concatenating DL bucket & Project name for unique naming
-  location      = var.region
-  force_destroy = true
-  storage_class = var.gcp_storage_class
-
-  uniform_bucket_level_access = true
-
-  lifecycle_rule {
-    action {
-      type = "Delete"
-    }
-    condition {
-      age = 30 # days
+  network_interface {
+    network    = "default"
+    subnetwork = "default"
+    access_config {
+      network_tier = "PREMIUM"
     }
   }
-}
 
-// create BQ dataset for the raw data
-resource "google_bigquery_dataset" "stg_coins_dataset" {
-  dataset_id                 = var.staging_dataset_name
-  project                    = var.project_id
-  location                   = var.region
-  delete_contents_on_destroy = true
-}
+  service_account {
+    email = google_service_account.cryptolytics-sa.email
+    scopes = ["cloud-platform"]
+  }
 
-// create BQ dataset for the DBT-transformed data
-resource "google_bigquery_dataset" "prod_coins_dataset" {
-  dataset_id                 = var.production_dataset_name
-  project                    = var.project_id
-  location                   = var.region
-  delete_contents_on_destroy = true
+  metadata = {
+    sshKeys = "${var.gce_ssh_user}:${file(var.ssh_pub_key_file)}"
+  }
+
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = var.gce_ssh_user
+      host        = google_compute_instance.vm_instance.network_interface[0].access_config[0].nat_ip
+      private_key = file(var.ssh_priv_key_file)
+    }
+    inline = [
+      "git clone https://github.com/aayomide/crypto_analytics_engineering.git",
+      "sudo apt-get install wget",
+      "wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh",
+      "bash Anaconda3-2022.10-Linux-x86_64.sh -b -p /home/aayomide/anaconda3",
+      "rm Anaconda3-2022.10-Linux-x86_64.sh",
+      "export PATH=/home/aayomide/anaconda3/bin:$PATH"
+    ]
+  }
 }
