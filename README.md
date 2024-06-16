@@ -71,22 +71,22 @@ Follow the [terraform reproduce guide](/setup/terraform_setup.md)
 ### 4. Create an SSH Connection to the newly created VM (on your local machine)
 Create a file called `config` within the .ssh directory in your home folder and paste the following information:
 
-    ```
+    
     HOST <vm-name-to-use-when-connecting>
         Hostname <external-ip-address>   # check the terraform output in the CLI or navigate to GCP > Compute Engine > VM instances.
         User <username used when running the ssh-keygen command>  # it is also the same as the gce_ssh_user
         IdentityFile <absolute-path-to-your-private-ssh-key-on-local-machine>
         LocalForward 8080 localhost:8080     # forward traffic from local port 8080 to port 8080 on the remote server where Airflow is running
-    ```
+    
   for example
   
-    ```
+    
     HOST cryptolytics_vm
         Hostname 35.225.33.44
         User aayomide
         IdentityFile c:/Users/aayomide/.ssh/ssh_key
         LocalForward 8080 localhost:8080
-    ```
+    
 Afterward, connect to the virtual machine via your local terminal by running `ssh cryptolytics_vm`. 
 
 You can also access to the VM via VS code as shown [here](https://github.com/AliaHa3/data-engineering-zoomcamp-project/blob/main/setup/gcp_vm.md#connecting-and-setting-up)
