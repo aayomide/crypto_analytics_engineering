@@ -2,12 +2,13 @@
 .coins_env/
 
 # terraform
-terraform/terraform.tfstate
-terraform/.terraform.lock.hcl
 terraform/.terraform
+terraform/.terraform.lock.hcl
 terraform/.keys
+terraform/terraform*
 
 # airflow
-airflow/logs/*
-airflow/dags/__pycache__/*
+airflow/logs/
+airflow/plugins/
+airflow/dags/__pycache__/
 airflow/.env
