@@ -2,11 +2,11 @@ version: 2
 
 sources:
     - name: staging
-      database: crypto-analytics-2404
-      schema: stg_coins_dataset
+      database: crypto-analytics-2404  # GCP project id
+      schema: stg_coins_dataset        # BigQuery dataset name
       
       tables:
-        - name: coins_data_raw
+        - name: coins_data_raw         # BigQuery table name
          # freshness:
            # warn_after: {count: 6, period: hour}
            # error_after: {count: 12, period: hour}
@@ -24,7 +24,7 @@ models:
           - name: coin_id
             description:
                   unique identifier for coin asset.
-            tests:
+            data_tests:
                 - unique:
                     severity: warn
                 - not_null:
