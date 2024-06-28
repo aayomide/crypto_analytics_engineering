@@ -1,7 +1,7 @@
 # Crytolytics: Coincap Data Extraction and Analysis Pipeline
 
 ## Introduction
-In today's data-driven world, data plays a pivotal role in shaping decisions within organizations. The sheer volume of data generated necessitates data engineers to efficiently centralize data, clean and model data to align with specific business requirements, and also make the data easily accessible for data consumers.
+In today's data-driven world, data plays a pivotal role in shaping decisions within organizations. The sheer volume of data generated necessitates data engineers to centralize data efficiently, clean and model data to align with specific business requirements, and also make the data easily accessible for data consumers.
 
 The aim of this project is to build an automated data pipeline that retrieves cryptocurrency data from the CoinCap API, processes and transforms it for analysis, and presents key metrics on a near-real-time* dashboard. The dashboard provides users with valuable insights into the dynamic cryptocurrency market.
 
@@ -44,7 +44,7 @@ Project Map:
   </p>
 </div>
 
-> *Disclaimer: This project is for illustrative purposes only. Please do not use this dashboard for actual financial decisions. T for thanks!*
+> *Disclaimer: This is only a pet project. Please, do not use this dashboard for actual financial decisions. T for thanks!*
 
 ---
 
@@ -77,6 +77,7 @@ Create a file called `config` within the .ssh directory in your home folder and 
         User <username used when running the ssh-keygen command>  # it is also the same as the gce_ssh_user
         IdentityFile <absolute-path-to-your-private-ssh-key-on-local-machine>
         LocalForward 8080 localhost:8080     # forward traffic from local port 8080 to port 8080 on the remote server where Airflow is running
+        LocalForward 8888 localhost:8888     # forward traffic from local port 888 to port 8888 on the remote server where Jupyter Notebook is running
     
   for example
   
@@ -86,13 +87,14 @@ Create a file called `config` within the .ssh directory in your home folder and 
         User aayomide
         IdentityFile c:/Users/aayomide/.ssh/ssh_key
         LocalForward 8080 localhost:8080
+        LocalForward 8888 localhost:8888
     
 Afterward, connect to the virtual machine via your local terminal by running `ssh cryptolytics_vm`. 
 
-You can also access to the VM via VS code as shown [here](https://github.com/AliaHa3/data-engineering-zoomcamp-project/blob/main/setup/gcp_vm.md#connecting-and-setting-up)
+You can also access the VM via VS code as shown [here](https://github.com/AliaHa3/data-engineering-zoomcamp-project/blob/main/setup/gcp_vm.md#connecting-and-setting-up)
 
 
-> Note: the value of the external ip address changes as you turn the VM instance on and off
+> Note: the value of the external IP address changes as you turn the VM instance on and off
 
 ### 5: Setup DBT (data build tool).
 Follow the [dbt how-to-reproduce guide](/setup/dbt_setup.md)
@@ -108,7 +110,7 @@ Follow the  [airflow how-to-reproduce guide](/setup/airflow_setup.md)
 
 ## Further Improvements
 * Use Apache Kafka to stream the data in real-time
-* Perform advanced data transformation using DBT or even use PySpark
+* Perform advanced data transformation using DBT or even PySpark
 * Implement more robust error handling with try-catch blocks and write more robust data quality tests in DBT
 * Pipeline alerting & monitoring feature
 
