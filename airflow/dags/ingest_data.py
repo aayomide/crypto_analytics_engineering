@@ -12,8 +12,6 @@ from google.cloud import storage
 from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateEmptyTableOperator
 from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 
 # environmental variables
@@ -21,14 +19,14 @@ PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 BUCKET_NAME = os.environ.get("GCP_GCS_BUCKET")
 BQ_DATASET_NAME = os.environ.get("BQ_DATASET_NAME", 'stg_coins_dataset')
 BQ_TABLE_NAME = "coins_data_raw"
-path_to_local_home = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
+PATH_TO_LOCAL_HOME = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
 
-dataset_url = "https://api.coincap.io/v2/assets?limit=2000"
-dataset_file = "coins_{{ data_interval_end.strftime(\'%m%d_%H%M\') }}.json"
-parquet_filename = dataset_file.replace('.json', '.parquet')
+DATASET_URL = "https://api.coincap.io/v2/assets?limit=100"
+DATASET_FILE = "coins_{{ data_interval_end.strftime(\'%m%d_%H%M\') }}.json"
+PARQUET_FILENAME = DATASET_FILE.replace('.json', '.parquet')
 
 
-def format_to_parquet(src_file):
+def format_to_parquet(src_file, output_parquet_file):
     """
     Convert the downloaded json dataset to parquet file format
     :param src_file: JSON file
@@ -39,8 +37,7 @@ def format_to_parquet(src_file):
 
     df = pd.DataFrame.from_dict(json_data['data'])   # extract needed object and convert to pandas dataframe
     
-    table = pa.Table.from_pandas(df, preserve_index=False)
-    pq.write_table(table, src_file.replace('.json', '.parquet'))  # export the parquet table to a parquet file
+    df.to_parquet(output_parquet_file, index=False) # export the parquet table to a parquet file
 
 
 def upload_to_gcs(bucket_name, local_json_file):
@@ -92,7 +89,7 @@ with DAG(
     # download the raw data
     download_data_task = BashOperator(
         task_id="download_data",
-        bash_command = f'curl --location {dataset_url} > {path_to_local_home}/{dataset_file} && ls {path_to_local_home}'
+        bash_command = f'curl --location {DATASET_URL} > {PATH_TO_LOCAL_HOME}/{DATASET_FILE} && ls {PATH_TO_LOCAL_HOME}'
     )
 
     # format the json file to parquet to make it easier to create the big query table schema
@@ -100,7 +97,8 @@ with DAG(
         task_id="format_to_parquet",
         python_callable=format_to_parquet,
         op_kwargs={
-            "src_file": f"{path_to_local_home}/{dataset_file}",
+            "src_file": f"{PATH_TO_LOCAL_HOME}/{DATASET_FILE}",
+            "output_parquet_file": f"{PARQUET_FILENAME}"
         },
     )
 
@@ -110,7 +108,7 @@ with DAG(
         python_callable=upload_to_gcs,
         op_kwargs={
             "bucket_name": BUCKET_NAME,
-            "local_json_file": f"{path_to_local_home}/{dataset_file}",
+            "local_json_file": f"{PATH_TO_LOCAL_HOME}/{DATASET_FILE}",
         },
     )
 
@@ -126,7 +124,7 @@ with DAG(
     load_data_to_bq_task = GCSToBigQueryOperator(
         task_id='load_data_to_bq',
         bucket=BUCKET_NAME,
-        source_objects= [f"raw/parquet/{parquet_filename}"],
+        source_objects= [f"raw/parquet/{PARQUET_FILENAME}"],
         source_format='PARQUET',
         destination_project_dataset_table=f'{PROJECT_ID}.{BQ_DATASET_NAME}.{BQ_TABLE_NAME}',
         autodetect=True,
@@ -144,13 +142,11 @@ with DAG(
     # remove the downloaded json file and csv file from airflow local path
     remove_local_files_task = BashOperator(
         task_id="remove_local_files",
-        bash_command = f'ls {path_to_local_home} && rm -f {path_to_local_home}/{dataset_file} {path_to_local_home}/{parquet_filename}\
-             && ls {path_to_local_home}'
+        bash_command = f'ls {PATH_TO_LOCAL_HOME} && rm -f {PATH_TO_LOCAL_HOME}/{DATASET_FILE} {PATH_TO_LOCAL_HOME}/{PARQUET_FILENAME}\
+             && ls {PATH_TO_LOCAL_HOME}'
     )
 
 
     # task dependencies
     download_data_task >> format_to_parquet_task >> local_to_gcs_task >> load_data_to_bq_task >> trigger_dbt_dag_task >> remove_local_files_task
     
-    
-
